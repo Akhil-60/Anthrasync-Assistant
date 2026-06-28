@@ -1,0 +1,15 @@
+﻿About Anthrasync
+
+Anthrasync is an India-based enterprise AI company headquartered in Bengaluru, founded in 2024. It builds real-time intelligent systems for enterprises, focused on retrieval-augmented generation (RAG), multilingual large language models (LLMs), voice agents, multimodal AI, and automation. The company designs scalable and secure AI solutions for industries including healthcare, retail, fintech, and education. Anthrasync was founded by Valmik Khadkale, Sushil Hagargi, and Diwakar Goud.
+
+Mission and Platform: Anthrasync is the developer of a real-time platform for universal knowledge and information. The platform facilitates access to and exchange of insights across various fields, and empowers individuals to share trusted information regardless of their background or language.
+
+Core Offerings: RAG Systems provide context-aware retrieval pipelines that deliver instant, grounded answers. Multilingual LLMs support over 20 languages. Voice AI Agents handle thousands of concurrent natural-language interactions. Healthcare AI provides HIPAA-compliant diagnostics, patient risk scoring, and clinical workflow automation. Commerce and Retail AI provides demand forecasting, customer engagement, and sentiment analysis. Fintech AI provides secure automation and intelligent claims processing.
+
+Key Achievements: Over 40 AI solutions built. Over 35 foundation models integrated. Support for more than 20 languages. Recognized by leading startup and innovation platforms in India, including Startup India, Startup Karnataka, and Silicon India.
+
+Industries Served: Healthcare for patient engagement, diagnostics, and workflow automation. Retail and Commerce for customer journeys, demand forecasting, and waste reduction. Education for interactive multilingual learning systems. Fintech for secure claims processing and automation. Travel for AI-powered assistance and predictive routing.
+
+Unique Value Proposition: Real-time enterprise automation with millisecond-level responses from knowledge bases. Scalability and security through sovereign AI infrastructure for compliance-heavy industries. Operational intelligence through predictive systems for efficiency and risk reduction. Customer engagement through AI-driven conversational experiences across multiple channels.
+
+Company Details: Name is Anthrasync. Founded in 2024. Headquarters in Bengaluru, India. Industry is AI and IT Services and Consulting. Stage is Unfunded. Founders are Valmik Khadkale, Sushil Hagargi, and Diwakar Goud.

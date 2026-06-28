@@ -1,0 +1,50 @@
+[
+  {
+    "question": "What is the employee leave policy?",
+    "expect_keywords": ["24"],
+    "expect_source": "HR_Policy.pdf"
+  },
+  {
+    "question": "How many paid leaves do employees get per year?",
+    "expect_keywords": ["24"],
+    "expect_source": "HR_Policy.pdf"
+  },
+  {
+    "question": "What is the refund policy?",
+    "expect_keywords": ["30 days"],
+    "expect_source": "Customer_FAQ.pdf"
+  },
+  {
+    "question": "What are the standard working hours?",
+    "expect_keywords": ["9", "6"],
+    "expect_source": "HR_Policy.pdf"
+  },
+  {
+    "question": "What is the notice period for confirmed employees?",
+    "expect_keywords": ["60"],
+    "expect_source": "HR_Policy.pdf"
+  },
+  {
+    "question": "What are the password requirements?",
+    "expect_keywords": ["12"],
+    "expect_source": "Compliance_Guidelines.pdf"
+  },
+  {
+    "question": "How long are pipeline run logs retained?",
+    "expect_keywords": ["90"],
+    "expect_source": "Product_Documentation.pdf"
+  },
+  {
+    "question": "How do I reset my password?",
+    "expect_keywords": ["Forgot Password"],
+    "expect_source": "Customer_FAQ.pdf"
+  },
+  {
+    "question": "What is the capital of France?",
+    "expect_not_found": true
+  },
+  {
+    "question": "What is the company's policy on cryptocurrency trading?",
+    "expect_not_found": true
+  }
+]
