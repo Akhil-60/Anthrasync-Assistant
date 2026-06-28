@@ -95,6 +95,9 @@ def stamp(t):
 
 @st.cache_resource
 def get_pipeline():
+    from src import config, ingest
+    if not os.path.exists(config.VECTOR_DIR) or not os.listdir(config.VECTOR_DIR):
+        ingest.main()
     return RAGPipeline()
 
 
