@@ -1,4 +1,4 @@
-"""
+﻿"""
 Central configuration for the Enterprise Knowledge Assistant.
 
 Every tunable design decision lives here so it can be changed in one place

@@ -1,0 +1,115 @@
+{
+  "name": "Invoice Approval",
+  "nodes": [
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "id": "d1abaef1-a45a-4de9-9bc2-06ae867a17cb",
+      "typeVersion": 1.1,
+      "name": "Start",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "position": [
+        -544,
+        16
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "search",
+        "base": {
+          "__rl": true,
+          "value": "appviMH1QV7aOWmYL",
+          "mode": "list",
+          "cachedResultName": "Invoice",
+          "cachedResultUrl": "https://airtable.com/appviMH1QV7aOWmYL"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tble6HWn3PmxddQMW",
+          "mode": "list",
+          "cachedResultName": "Imported table",
+          "cachedResultUrl": "https://airtable.com/appviMH1QV7aOWmYL/tble6HWn3PmxddQMW"
+        },
+        "filterByFormula": "=AND({Send for Approval}='True', {Application Status}='Draft')",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [
+        -336,
+        16
+      ],
+      "id": "47b62dc2-4f1d-4a3b-b306-4e2dab1c3f8d",
+      "name": "Search records",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "ZG3OR2fzYdNtmyq2",
+          "name": "Airtable Personal Access Token account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "akhilanchal1234@gmail.com",
+        "subject": "=Approval needed: Invoice {{ $json.fields[\"Invoice Number\"] }}",
+        "message": "=Vendor: {{ Object.values($json.fields).find(v => typeof v === 'string' && v.includes('Pvt')) || $json.fields['Vendor'] }}\nInvoice: {{ $json.fields[\"Invoice Number\"] }}\nGross Amount: {{ $json.fields[\"Gross Amount\"] }} {{ $json.fields[\"Currency\"] }}\nPlease approve or reject this invoice.",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        -128,
+        16
+      ],
+      "id": "0e03105f-99ab-4343-af05-034557d87b0e",
+      "name": "Send a message",
+      "webhookId": "30e49e42-3589-4b45-862a-549479c2f0a0",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "RZzOoZVUQINCFJtA",
+          "name": "Gmail account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Start": {
+      "main": [
+        [
+          {
+            "node": "Search records",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search records": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "e3ef9bd2-b1aa-406c-9804-6e377644b1e6",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "f7b4cf893b427c4fa2b92cb1effba362fe877650930cbfcf09b73f37f1ad3c17"
+  },
+  "nodeGroups": [],
+  "id": "6MB4FYwfUxC9eumy",
+  "tags": []
+}

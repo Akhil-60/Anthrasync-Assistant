@@ -1,102 +1,55 @@
-# Enterprise Knowledge Assistant
+﻿# AI Invoice Automation Workflow
 
-A production-oriented Retrieval Augmented Generation (RAG) system that answers
-natural-language questions from a collection of internal documents and cites the
-exact source (document + page) for every answer. It refuses to answer when the
-documents don't contain the information, instead of hallucinating.
+**Round 3 · Task 1 — AI Engineer Assignment**
 
-> **Assumption:** No document set was provided with the assignment, so this repo
-> ships with a representative sample knowledge base under `data/`, covering all
-> six categories in the brief (HR policy, product docs, customer FAQ, technical
-> guide, compliance guidelines, process docs). The pipeline works with **any**
-> PDF dropped into `data/` — nothing is hard-coded to these files.
+An end-to-end, AI-powered invoice processing pipeline. Invoices arrive by email as PDF attachments; the system reads them, extracts structured data using an LLM, stores a clean record in a database, and routes each invoice through a human approval step.
 
-## Architecture
+## Overview
+Two n8n workflows backed by a FastAPI + Gemini microservice and Airtable database.
 
-RAG runs in two phases:
+- **Workflow 1 — Ingestion:** Gmail Trigger -> IF (PDF filter) -> Extract from PDF -> HTTP Request (FastAPI /extract-invoice) -> Code (clean JSON) -> Airtable (Status = Draft)
+- **Workflow 2 — Approval:** Trigger -> Airtable Search (Send for Approval = true AND Status = Draft) -> Gmail notify -> human sets Status Fully Approved/Rejected + Approved At
 
-1. **Ingestion (one-time)** — `src/ingest.py` loads each PDF page by page, splits
-   pages into overlapping chunks, embeds them locally, and stores the vectors +
-   metadata (document, page) in a persistent Chroma collection.
-2. **Query (per question)** — `src/retriever.py` embeds the question and finds the
-   most similar chunks; `src/generator.py` asks the LLM to answer using only those
-   chunks; `src/pipeline.py` ties them together, adds citations, and applies the
-   hallucination guards.
+## Tech Stack
+- Orchestration: n8n (Docker)
+- AI/LLM: Google Gemini (gemini-2.5-flash-lite) via google-generativeai
+- Backend: FastAPI + Python (no LangChain)
+- Database: Airtable
+- Email: Gmail (OAuth2 via n8n)
 
-```
-Ingestion:  PDFs -> load+chunk (pypdf) -> embed (MiniLM) -> Chroma
-Query:      question -> retrieve top-k <- Chroma -> grounded prompt -> LLM -> answer + sources
-```
+## Environment Variables
+Create a .env file:
+GEMINI_API_KEY=your_key_here
+
+Gmail (OAuth2) and Airtable (Personal Access Token) credentials are configured inside n8n.
 
 ## Setup
+1. python -m venv venv ; venv\Scripts\activate ; pip install -r requirements.txt
+2. Add GEMINI_API_KEY to .env
+3. Start API: uvicorn invoice_api:app --host 0.0.0.0 --port 8000 --reload
+4. Start n8n: docker run -d --name n8n -p 5678:5678 -v n8n_data:/home/node/.n8n n8nio/n8n:latest
+5. Open n8n at http://127.0.0.1:5678 (use 127.0.0.1, not localhost, on Windows)
+6. Import both workflow JSONs from n8n-workflows/
+7. Configure Gmail + Airtable credentials in n8n
+8. Activate the Ingestion workflow
 
-```bash
-pip install -r requirements.txt
+## Workflow Explanation
+Ingestion: detects PDF-attachment emails, ignores non-PDF (IF false branch empty), extracts text, sends to Gemini via FastAPI, cleans the JSON, and creates a Draft record.
+Approval: finds invoices flagged for approval, emails the approver a summary; approver updates status in Airtable with an Approved At timestamp (audit trail).
 
-cp .env.example .env            # then add your GEMINI_API_KEY
-python -m src.ingest            # build the index from data/ (run once)
+## AI Prompt
+The FastAPI service prompts Gemini to return valid JSON only, with fields: vendor, vendorUid, vendorIban, invoiceNumber, invoiceDate, dueDate, netAmount, vatAmount, vatPercentage, grossAmount, currency, costCenter, lineItems[], confidenceScore, anomalies[]. Numbers as numbers, dates as YYYY-MM-DD, nulls where missing. (Exact prompt in src/generator.py.)
 
-streamlit run app.py            # launch the UI
-# or expose the API:
-uvicorn src.api:app --reload    # then open http://127.0.0.1:8000/docs
-```
+## Error Handling
+- Non-PDF emails filtered by IF node.
+- FastAPI applies safe defaults to every field; on error returns valid JSON with the error in anomalies.
+- Empty line items removed; confidence + anomalies stored for review.
 
-Get a free Gemini key at https://aistudio.google.com (Get API key).
+## Assumptions
+- Approval via manual Airtable status update (reliable); production can use n8n Send-and-Wait for email-button approval.
+- PDF stored via Airtable attachment; production uploads to object storage and stores the URL.
+- Single attachment per email assumed.
+- Use 127.0.0.1 / host.docker.internal on Windows.
 
-## Technology choices
-
-| Component | Choice | Why |
-|-----------|--------|-----|
-| Language | Python | Mature AI/ML ecosystem |
-| PDF parsing | pypdf | Reliable text + per-page extraction (needed for citations) |
-| Embeddings | Sentence Transformers `all-MiniLM-L6-v2` | Local, free, no API key, good quality/speed |
-| Vector store | ChromaDB | Persistent, metadata filtering, zero-setup |
-| LLM | Gemini `gemini-2.0-flash` (configurable) | Free tier; OpenAI/Anthropic swappable via config |
-| UI | Streamlit | Fast, clean interface |
-| API | FastAPI | Typed `POST /ask` endpoint |
-
-## Design decisions
-
-- **Chunking:** ~180-word chunks with 30-word overlap. The size is kept under the
-  embedding model's 256-token limit so no text is silently truncated; the overlap
-  keeps a fact from being lost across a chunk boundary.
-- **Metadata:** every chunk stores `document` and `page`, which is how citations
-  are produced.
-- **Hallucination prevention (two guards):**
-  1. If no retrieved chunk clears the relevance threshold, the system answers
-     "not found" *without calling the LLM* at all.
-  2. The prompt forbids outside knowledge and instructs the model to return a
-     fixed "not found" sentence when the context lacks the answer; if it does,
-     sources are dropped.
-- **Configurable provider:** `LLM_PROVIDER` switches between Gemini, OpenAI, and
-  Anthropic with no other code change. All parameters live in `src/config.py`.
-- **Confidence** is the retrieval similarity of the best matching chunk.
-
-## Evaluation
-
-`eval/test_cases.json` holds a gold question set spanning in-scope questions,
-ambiguous phrasings, and out-of-scope questions. `python -m eval.evaluate` runs
-each through the pipeline and reports:
-
-- **Answer accuracy** — does the answer contain the expected fact?
-- **Citation accuracy** — is the expected source document cited?
-- **Not-found handling** — are out-of-scope questions correctly refused?
-
-The check is keyword-based for simplicity; an LLM-as-judge or semantic-similarity
-scorer would be a natural upgrade.
-
-## Known limitations
-
-- PDF text only; scanned/image-only pages need OCR (not included).
-- Keyword-based evaluation is coarse and can miss correct paraphrases.
-- The relevance threshold is a single global value and may need per-corpus tuning.
-- No authentication or multi-user session handling.
-- Single-language (English) tuning.
-
-## Future improvements
-
-- Hybrid search (keyword + semantic) and a re-ranking step for better retrieval.
-- Conversation memory for follow-up questions.
-- Query rewriting for vague questions.
-- LLM-as-judge evaluation and a labelled regression set.
-- Containerised deployment (Docker) and authentication.
+## Security
+Secrets live only in .env (git-ignored) and n8n credentials. Regenerate any exposed key/token.

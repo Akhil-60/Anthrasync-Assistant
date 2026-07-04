@@ -1,0 +1,2 @@
+﻿Vendor,Vendor UID,Vendor IBAN,Invoice Number,Invoice Date,Due Date,Net Amount,VAT Amount,VAT %,Gross Amount,Currency,Cost Center,Line Items,Confidence,Anomalies,Application Status,Send for Approval,Sender Email,Email Subject,Received At
+ABC Office Supplies Pvt. Ltd.,VEND-1001,DE89370400440532013000,INV-2026-001,2026-07-03,2026-07-10,3550,639,18,4189,INR,IT-001,[],0.95,,Draft,false,akhilanchal64@gmail.com,Simple Invoices,2026-07-03T14:00:00Z

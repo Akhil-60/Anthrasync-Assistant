@@ -1,0 +1,155 @@
+{
+  "name": "Invoice Ingestion Workflow (Round 3 Task 1)",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "f94e4e65-11e6-4cfc-adf2-3b5a963b362a",
+      "name": "Email Trigger",
+      "type": "n8n-nodes-base.emailTrigger",
+      "typeVersion": 1,
+      "position": [
+        1344,
+        224
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.attachments.filter(a => a.fileName.endsWith('.pdf')).length > 0 }}",
+              "operation": "equals",
+              "value2": true
+            }
+          ]
+        }
+      },
+      "id": "cebc2573-71eb-412d-a0bb-b11b66e8c342",
+      "name": "Filter: Only PDFs",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        1520,
+        224
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "855a0e2c-877f-4c97-9733-f918faad9890",
+      "name": "Extract from PDF",
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        1680,
+        208
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://host.docker.internal:8000/extract-invoice",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "text",
+              "value": "={{ $json.text }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "738cc2f3-fa10-40b1-aae4-4545c2502e04",
+      "name": "HTTP Request (Call /extract-invoice)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        1888,
+        208
+      ]
+    },
+    {
+      "parameters": {
+        "application": {
+          "__rl": true,
+          "mode": "url",
+          "value": ""
+        },
+        "table": {
+          "__rl": true,
+          "mode": "url",
+          "value": ""
+        }
+      },
+      "id": "75244860-f452-4a0f-b0cf-a667f947ee4c",
+      "name": "Airtable - Insert Invoice",
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 1,
+      "position": [
+        2080,
+        208
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Filter: Only PDFs": {
+      "main": [
+        [
+          {
+            "node": "Extract from PDF",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract from PDF": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request (Call /extract-invoice)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request (Call /extract-invoice)": {
+      "main": [
+        [
+          {
+            "node": "Airtable - Insert Invoice",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "2fa840e4-3415-4b5e-b7c5-d364ab1a87f9",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "28fc8c546b97ee3608ae65d6866ca38c4291a98557c098ab77d190d097855a80"
+  },
+  "nodeGroups": [],
+  "id": "WYXA95rFCaJhEhkj",
+  "tags": []
+}

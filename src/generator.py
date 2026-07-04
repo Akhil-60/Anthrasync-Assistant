@@ -6,6 +6,8 @@ grounded ONLY in those chunks. The prompt controls hallucination, sets a warm
 conversational tone, and tells the model to reply in the user's own language.
 """
 
+import json  # <-- ADDED for Task 1 invoice extraction
+
 from src import config
 
 NOT_FOUND = "I could not find this information in the provided documents."
@@ -43,6 +45,7 @@ Question
 
 Answer:
 """
+
 
 def _build_context(hits: list) -> str:
     blocks = []
@@ -141,3 +144,69 @@ class Generator:
         else:
             yield self._call(prompt)
 
+    # ------------------ TASK 1: INVOICE EXTRACTION (ADDED BELOW) ------------------
+
+    INVOICE_PROMPT_TEMPLATE = """
+You are a financial document processing AI. Extract the exact invoice details from the raw text below.
+
+Return **ONLY** valid JSON. Do not wrap it in markdown code blocks (```json) or add any extra text.
+
+If a field is missing, use `null` for strings and `0` for numbers.
+
+**Expected JSON Structure:**
+{{
+  "vendor": "string or null",
+  "vendorUid": "string or null",
+  "vendorIban": "string or null",
+  "invoiceNumber": "string or null",
+  "invoiceDate": "YYYY-MM-DD or null",
+  "dueDate": "YYYY-MM-DD or null",
+  "netAmount": 0.0,
+  "vatAmount": 0.0,
+  "vatPercentage": 0.0,
+  "grossAmount": 0.0,
+  "currency": "string or null",
+  "costCenter": "string or null",
+  "lineItems": [
+    {{ "description": "string", "quantity": 0, "unitPrice": 0.0, "total": 0.0 }}
+  ],
+  "confidenceScore": 0.0,
+  "anomalies": ["list of warnings, if any"]
+}}
+
+Important Rules:
+- If you see "Invoice Total" or "Total Due", map it to `grossAmount`.
+- If `Net + VAT = Gross` fails, add a warning in `anomalies`.
+- If line items table is unreadable, keep it as an empty array.
+
+Raw Text:
+{invoice_text}
+
+Valid JSON Output:
+"""
+
+    def extract_invoice_data(self, invoice_text: str) -> dict:
+        """Extracts structured invoice data using a specialized prompt."""
+        prompt = self.INVOICE_PROMPT_TEMPLATE.format(invoice_text=invoice_text)
+        response = self._call(prompt)
+
+        # Clean the response (remove possible markdown fences)
+        response = response.strip()
+        if response.startswith("```json"):
+            response = response[7:]
+        if response.startswith("```"):
+            response = response[3:]
+        if response.endswith("```"):
+            response = response[:-3]
+        response = response.strip()
+
+        try:
+            return json.loads(response)
+        except json.JSONDecodeError:
+            # Fallback if AI gives bad JSON
+            return {
+                "vendor": None,
+                "invoiceNumber": None,
+                "anomalies": ["AI returned malformed JSON, please review manually"],
+                "raw_response": response
+            }
